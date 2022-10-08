@@ -1,8 +1,8 @@
-# xv6 classical operating system 
+# xv6 classical operating system 💿
 xv6-cos is an enhanced version of the xv6-riscv operating system
 
 
-## Installation using Docker
+## Installation using Docker 🐳
 
 Clone this repository using
 
@@ -11,6 +11,10 @@ Clone this repository using
 Then navigate to the codebase
 
     cd xv6-cos
+
+Start the docker engine
+
+    sudo service docker start
 
 Run the docker image (created by [wtakuo](https://hub.docker.com/r/wtakuo/xv6-env))
 
@@ -27,6 +31,15 @@ To boot into xv6-cos
 Any time you modify xv6-cos, you need to run the above `make` and `make qemu` commands to see the changes
 Use `ctrl+a` followed by `x` to exit xv6-cos
 
-## xv6-riscv
+## xv6-riscv 💽
 The original project can be found here -  
 https://github.com/mit-pdos/xv6-riscv
+
+Docker Image -  
+https://hub.docker.com/r/wtakuo/xv6-env
+
+<!-- 
+
+xv6 password is "xv6" 
+
+-->
