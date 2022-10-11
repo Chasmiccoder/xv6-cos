@@ -83,7 +83,7 @@ argstr(int n, char *buf, int max)
 extern uint64 sys_fork(void);
 extern uint64 sys_exit(void);
 extern uint64 sys_wait(void);
-extern uint64 sys_waitx(void);
+extern uint64 sys_waitx(void); // TODO
 extern uint64 sys_pipe(void);
 extern uint64 sys_read(void);
 extern uint64 sys_kill(void);
@@ -102,6 +102,8 @@ extern uint64 sys_unlink(void);
 extern uint64 sys_link(void);
 extern uint64 sys_mkdir(void);
 extern uint64 sys_close(void);
+extern uint64 sys_trace(void);  // added for implementing trace
+
 
 // An array mapping syscall numbers from syscall.h
 // to the function that handles the system call.
@@ -127,8 +129,61 @@ static uint64 (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
-[SYS_waitx]   sys_waitx,
+[SYS_waitx]   sys_waitx,  // TODO
+[SYS_trace]   sys_trace,  // added for implementing trace
 };
+
+/ array to store information about each syscall 
+struct syscall_info syscall_structs[] = 
+{
+[SYS_fork]    (struct syscall_info) {SYS_fork, 0,"fork"},
+[SYS_exit]    (struct syscall_info) {SYS_exit, 1,"exit"},
+[SYS_wait]    (struct syscall_info) {SYS_wait, 1,"wait"},
+[SYS_pipe]    (struct syscall_info) {SYS_pipe, 1,"pipe"},
+[SYS_read]    (struct syscall_info) {SYS_read, 3,"read"},
+[SYS_kill]    (struct syscall_info) {SYS_kill, 1,"kill"},
+[SYS_exec]    (struct syscall_info) {SYS_exec, 2,"exec"},
+[SYS_fstat]   (struct syscall_info) {SYS_fstat, 2,"fstat"},
+[SYS_chdir]   (struct syscall_info) {SYS_chdir, 1,"chdir"},
+[SYS_dup]     (struct syscall_info) {SYS_dup, 1,"dup"},
+[SYS_getpid]  (struct syscall_info) {SYS_getpid, 0,"getpid"},
+[SYS_sbrk]    (struct syscall_info) {SYS_sbrk, 1,"sbrk"},
+[SYS_sleep]   (struct syscall_info) {SYS_sleep, 1,"sleep"},
+[SYS_uptime]  (struct syscall_info) {SYS_uptime, 0,"uptime"},
+[SYS_open]    (struct syscall_info) {SYS_open, 2,"open"},
+[SYS_write]   (struct syscall_info) {SYS_write, 3,"write"},
+[SYS_mknod]   (struct syscall_info) {SYS_mknod, 3,"mknod"},
+[SYS_unlink]  (struct syscall_info) {SYS_unlink, 1,"unlink"},
+[SYS_link]    (struct syscall_info) {SYS_link, 2,"link"},
+[SYS_mkdir]   (struct syscall_info) {SYS_mkdir, 1,"mkdir"},
+[SYS_close]   (struct syscall_info) {SYS_close, 1,"close"},
+[SYS_trace]   (struct syscall_info) {SYS_trace, 1,"trace"},
+};
+
+// Function called to print trace info
+void 
+print_trace(struct proc* p, int syscall_num)
+{
+  printf("%d: syscall %s (", p->pid, syscall_structs[syscall_num].name);
+
+  int curr_arg;
+  // Print arguments
+  for(int i=0; i<syscall_structs[syscall_num].num_args; i++)
+  {
+    argint(i, &curr_arg);
+    printf("%d", curr_arg);
+    if (i != syscall_structs[syscall_num].num_args - 1) {
+      printf(" ");
+    }
+    else
+    {
+      printf(")");
+    }
+  }
+  printf(" -> %d\n", p->trapframe->a0);
+}
+
+////////////////////////////////////////////////////////////////////////
 
 void
 syscall(void)
@@ -141,6 +196,13 @@ syscall(void)
     // Use num to lookup the system call function for num, call it,
     // and store its return value in p->trapframe->a0
     p->trapframe->a0 = syscalls[num]();
+
+    // (xv6-cos)
+    if ((p->trace_mask & (1<<num)) !=0)
+    {
+      print_trace(p, num);
+    }
+
   } else {
     printf("%d %s: unknown sys call %d\n",
             p->pid, p->name, num);

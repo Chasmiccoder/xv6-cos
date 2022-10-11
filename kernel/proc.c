@@ -146,6 +146,7 @@ found:
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
 
+  // (xv6-cos)
   p->rtime = 0;
   p->etime = 0;
   p->ctime = ticks;
@@ -173,6 +174,9 @@ freeproc(struct proc *p)
   p->killed = 0;
   p->xstate = 0;
   p->state = UNUSED;
+
+  // (xv6-cos)
+  p->trace_mask = 0;
 }
 
 // Create a user page table for a given process, with no user memory,
@@ -315,6 +319,10 @@ fork(void)
   safestrcpy(np->name, p->name, sizeof(p->name));
 
   pid = np->pid;
+
+  // (xv6-cos)
+  // child process inherits trace mask from parent.
+  np->trace_mask = p->trace_mask;
 
   release(&np->lock);
 
@@ -511,7 +519,7 @@ update_time()
 //  - choose a process to run.
 //  - swtch to start running that process.
 //  - eventually that process transfers control
-//    via swtch back to the scheduler.
+//    via swtch back to the scheduler.xl
 void
 scheduler(void)
 {
@@ -523,21 +531,58 @@ scheduler(void)
     // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
 
-    for(p = proc; p < &proc[NPROC]; p++) {
-      acquire(&p->lock);
-      if(p->state == RUNNABLE) {
-        // Switch to chosen process.  It is the process's job
-        // to release its lock and then reacquire it
-        // before jumping back to us.
-        p->state = RUNNING;
-        c->proc = p;
-        swtch(&c->context, &p->context);
+    // (xv6-cos)
+    // round robin algorithm
+    if(SCHEDULING_ALGO == 0) {
+      for(p = proc; p < &proc[NPROC]; p++) {
+        acquire(&p->lock);
+        if(p->state == RUNNABLE) {
+          // Switch to chosen process.  It is the process's job
+          // to release its lock and then reacquire it
+          // before jumping back to us.
+          p->state = RUNNING;
+          c->proc = p;
+          swtch(&c->context, &p->context);
 
-        // Process is done running for now.
-        // It should have changed its p->state before coming back.
-        c->proc = 0;
+          // Process is done running for now.
+          // It should have changed its p->state before coming back.
+          c->proc = 0;
+        }
+        release(&p->lock);
       }
-      release(&p->lock);
+    } else if(SCHEDULING_ALGO == 1) { // first come first serve
+      // struct proc *p2 = 0;
+      struct proc *first_come_process = 0;
+      c->proc = 0;
+
+      int min_creation_time = 0;
+      first_come_process = 0;
+
+      for(p = proc; p < &proc[NPROC]; p++) {
+        acquire(&p->lock);
+        if(p->state == RUNNABLE) {
+          if(min_creation_time == 0 || first_come_process == 0) {
+            min_creation_time = p->ctime;
+            first_come_process = p;
+            continue;
+          } else if(min_creation_time > p->ctime) {
+            min_creation_time = p->ctime;
+            release(&first_come_process->lock);
+            first_come_process = p;
+            continue;
+          }
+        }
+        release(&p->lock);
+      }
+
+      if(first_come_process != 0) {
+        first_come_process->state = RUNNING;
+        c->proc = first_come_process;
+        swtch(&c->context, &first_come_process->context);
+
+        c->proc = 0;
+        release(&first_come_process->lock);
+      }
     }
   }
 }

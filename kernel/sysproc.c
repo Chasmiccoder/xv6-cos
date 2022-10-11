@@ -106,3 +106,16 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+
+// (xv6-cos)
+// adding trace syscall
+uint64
+sys_trace(void)
+{
+  // set trace mask as the 0th argument
+  int mask; 
+  argint(0, &mask);
+  myproc()->trace_mask = mask;
+  return 0;
+}

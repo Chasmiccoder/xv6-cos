@@ -63,6 +63,25 @@ CFLAGS += -ffreestanding -fno-common -nostdlib -mno-relax
 CFLAGS += -I.
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 
+# (xv6-cos)
+########## Scheduling Algorithms ##########
+# TODO explain
+# Round Robin            = 0
+# First Come First Serve = 1
+
+VAR_SCHEDULING_ALGO = -D SCHEDULING_ALGO=0
+
+# If the user specifies a scheduling algorithm, then update SCHEDULING_ALGO
+ifeq ($(CUSTOM_SCHEDULING_ALGO), ROUND_ROBIN)
+	VAR_SCHEDULING_ALGO = -D SCHEDULING_ALGO=0
+endif
+ifeq ($(CUSTOM_SCHEDULING_ALGO), FIRST_COME_FIRST_SERVE)
+	VAR_SCHEDULING_ALGO = -D SCHEDULING_ALGO=1
+endif
+
+CFLAGS += $(VAR_SCHEDULING_ALGO)
+###########################################
+
 # Disable PIE when possible (for Ubuntu 16.10 toolchain)
 ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]no-pie'),)
 CFLAGS += -fno-pie -no-pie
@@ -128,11 +147,16 @@ UPROGS=\
 	$U/_rm\
 	$U/_sh\
 	$U/_stressfs\
-	$U/_time\
 	$U/_usertests\
 	$U/_grind\
 	$U/_wc\
 	$U/_zombie\
+	$U/_strace\
+	$U/_time\
+	$U/_schedulertest\
+	
+# TODO: Added _time, _schedulertest, _strace
+# explain these
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)

@@ -105,7 +105,13 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
 
+  // (xv6-cos)
+<<<<<<< HEAD
+  int trace_mask;              // For tracing syscall executions
+
+=======
+>>>>>>> 0955e20 (added FCFS scheduling)
   uint rtime;                  // How long the process ran for
   uint ctime;                  // When the process was created
-  uint etime;                  // Whent did the process exit
+  uint etime;                  // When did the process exit
 };

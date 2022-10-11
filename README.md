@@ -1,6 +1,7 @@
 # xv6 classical operating system 💿
 xv6-cos is an enhanced version of the xv6-riscv operating system
 
+All changes made are marked with a string `(xv6-cos)` in comments, to track what all changes were made to the original xv6
 
 ## Installation using Docker 🐳
 
@@ -28,8 +29,25 @@ To boot into xv6-cos
 
     make qemu
 
-Any time you modify xv6-cos, you need to run the above `make` and `make qemu` commands to see the changes
+Any time you modify xv6-cos, you need to run `make clean`, then `make`, then `make qemu` to see the changes.
+`make clean` is important to see changes in the scheduling algorithm
+
 Use `ctrl+a` followed by `x` to exit xv6-cos
+
+## Usage
+
+Scheduling - By default, `make` builds the os according to Round Robin Scheduling
+
+To build according to Round Robin Scheduling
+
+    make CUSTOM_SCHEDULING_ALGO=ROUND_ROBIN
+
+To build according to First Come First Serve Scheduling
+
+    make CUSTOM_SCHEDULING_ALGO=FIRST_COME_FIRST_SERVE
+
+
+
 
 ## xv6-riscv 💽
 The original project can be found here -  
@@ -41,5 +59,10 @@ https://hub.docker.com/r/wtakuo/xv6-env
 <!-- 
 
 xv6 password is "xv6" 
+
+Make with custom scheduling algo -
+
+
+    make CUSTOM_SCHEDULING_ALGO=FIRST_COME_FIRST_SERVE
 
 -->

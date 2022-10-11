@@ -1,3 +1,5 @@
+// File given to explain how waitx can be used
+// TODO explain
 #include "kernel/types.h"
 #include "kernel/stat.h"
 #include "user/user.h"

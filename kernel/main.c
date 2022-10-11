@@ -17,6 +17,14 @@ main()
     printf("=== Welcome to xv6-cos ===\n");
     printf("The xv6-cos kernel is booting\n");
     printf("\n");
+
+    // (xv6-cos)
+    if(SCHEDULING_ALGO == 0) {
+      printf("Using Round Robin Scheduling\n");
+    } else if(SCHEDULING_ALGO == 1) {
+      printf("Using First Come First Serve Scheduling\n");
+    }
+
     kinit();         // physical page allocator
     kvminit();       // create kernel page table
     kvminithart();   // turn on paging

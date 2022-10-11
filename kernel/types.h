@@ -8,3 +8,11 @@ typedef unsigned int  uint32;
 typedef unsigned long uint64;
 
 typedef uint64 pde_t;
+
+// (xv6-cos)
+// struct to store information about syscalls
+struct syscall_info
+{
+  int syscall_num, num_args;
+  char* name;
+};
