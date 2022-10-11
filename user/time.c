@@ -1,3 +1,4 @@
+// (xv6-cos)
 // File given to explain how waitx can be used
 // TODO explain
 #include "kernel/types.h"

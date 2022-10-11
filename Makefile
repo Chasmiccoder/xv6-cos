@@ -28,7 +28,7 @@ OBJS = \
   $K/sysfile.o \
   $K/kernelvec.o \
   $K/plic.o \
-  $K/virtio_disk.o
+  $K/virtio_disk.o \
 
 # riscv64-unknown-elf- or riscv64-linux-gnu-
 # perhaps in /opt/riscv/bin
@@ -151,16 +151,13 @@ UPROGS=\
 	$U/_grind\
 	$U/_wc\
 	$U/_zombie\
-<<<<<<< HEAD
 	$U/_strace\
 	$U/_time\
 	$U/_schedulertest\
-	
+
+# (xv6-cos)
 # TODO: Added _time, _schedulertest, _strace
 # explain these
-=======
-	$U/_strace # Add strace user program to Makefile \
->>>>>>> a622407307e2bc29b2939c50c428d8cf14044b9f
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)

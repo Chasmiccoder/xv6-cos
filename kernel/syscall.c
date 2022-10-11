@@ -102,12 +102,11 @@ extern uint64 sys_unlink(void);
 extern uint64 sys_link(void);
 extern uint64 sys_mkdir(void);
 extern uint64 sys_close(void);
+
+// (xv6-cos)
 extern uint64 sys_trace(void);  // added for implementing trace
-<<<<<<< HEAD
 
-=======
->>>>>>> a622407307e2bc29b2939c50c428d8cf14044b9f
-
+// (xv6-cos)
 // An array mapping syscall numbers from syscall.h
 // to the function that handles the system call.
 static uint64 (*syscalls[])(void) = {
@@ -132,18 +131,12 @@ static uint64 (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
-<<<<<<< HEAD
 [SYS_waitx]   sys_waitx,  // TODO
 [SYS_trace]   sys_trace,  // added for implementing trace
 };
 
-/ array to store information about each syscall 
-=======
-[SYS_trace]   sys_trace,  // added for implementing trace
-};
-
+// (xv6-cos)
 // array to store information about each syscall 
->>>>>>> a622407307e2bc29b2939c50c428d8cf14044b9f
 struct syscall_info syscall_structs[] = 
 {
 [SYS_fork]    (struct syscall_info) {SYS_fork, 0,"fork"},
@@ -170,16 +163,12 @@ struct syscall_info syscall_structs[] =
 [SYS_trace]   (struct syscall_info) {SYS_trace, 1,"trace"},
 };
 
+// (xv6-cos)
 // Function called to print trace info
 void 
 print_trace(struct proc* p, int syscall_num)
 {
   printf("%d: syscall %s (", p->pid, syscall_structs[syscall_num].name);
-<<<<<<< HEAD
-
-=======
-  
->>>>>>> a622407307e2bc29b2939c50c428d8cf14044b9f
   int curr_arg;
   // Print arguments
   for(int i=0; i<syscall_structs[syscall_num].num_args; i++)
@@ -197,11 +186,8 @@ print_trace(struct proc* p, int syscall_num)
   printf(" -> %d\n", p->trapframe->a0);
 }
 
-<<<<<<< HEAD
 ////////////////////////////////////////////////////////////////////////
 
-=======
->>>>>>> a622407307e2bc29b2939c50c428d8cf14044b9f
 void
 syscall(void)
 {
@@ -213,19 +199,12 @@ syscall(void)
     // Use num to lookup the system call function for num, call it,
     // and store its return value in p->trapframe->a0
     p->trapframe->a0 = syscalls[num]();
-<<<<<<< HEAD
 
     // (xv6-cos)
-=======
->>>>>>> a622407307e2bc29b2939c50c428d8cf14044b9f
     if ((p->trace_mask & (1<<num)) !=0)
     {
       print_trace(p, num);
     }
-<<<<<<< HEAD
-
-=======
->>>>>>> a622407307e2bc29b2939c50c428d8cf14044b9f
   } else {
     printf("%d %s: unknown sys call %d\n",
             p->pid, p->name, num);

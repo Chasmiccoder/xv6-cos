@@ -20,5 +20,7 @@
 #define SYS_link   19
 #define SYS_mkdir  20
 #define SYS_close  21
+
+// (xv6-cos)
 #define SYS_waitx  22 // TODO
 #define SYS_trace  23 // TODO

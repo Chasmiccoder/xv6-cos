@@ -58,6 +58,9 @@ https://hub.docker.com/r/wtakuo/xv6-env
 
 <!-- 
 
+Potential bugs:
+sys_waitx not accounted for in trace (in syscall.h)
+
 xv6 password is "xv6" 
 
 Make with custom scheduling algo -

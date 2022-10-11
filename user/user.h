@@ -23,7 +23,6 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
-int trace(int); // adding trace syscall
 
 // (xv6-cos)
 int trace(int); // adding trace syscall

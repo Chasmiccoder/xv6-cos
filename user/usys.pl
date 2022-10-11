@@ -14,7 +14,7 @@ sub entry {
     print " ecall\n";
     print " ret\n";
 }
-	
+
 entry("fork");
 entry("exit");
 entry("wait");
@@ -36,8 +36,7 @@ entry("getpid");
 entry("sbrk");
 entry("sleep");
 entry("uptime");
-<<<<<<< HEAD
+
+# (xv6-cos)
 entry("waitx");
-=======
 entry("trace");
->>>>>>> a622407307e2bc29b2939c50c428d8cf14044b9f
