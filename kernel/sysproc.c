@@ -107,8 +107,11 @@ sys_uptime(void)
   return xticks;
 }
 
+<<<<<<< HEAD
 
 // (xv6-cos)
+=======
+>>>>>>> a622407307e2bc29b2939c50c428d8cf14044b9f
 // adding trace syscall
 uint64
 sys_trace(void)
@@ -118,4 +121,8 @@ sys_trace(void)
   argint(0, &mask);
   myproc()->trace_mask = mask;
   return 0;
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> a622407307e2bc29b2939c50c428d8cf14044b9f

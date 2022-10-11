@@ -36,4 +36,8 @@ entry("getpid");
 entry("sbrk");
 entry("sleep");
 entry("uptime");
+<<<<<<< HEAD
 entry("waitx");
+=======
+entry("trace");
+>>>>>>> a622407307e2bc29b2939c50c428d8cf14044b9f

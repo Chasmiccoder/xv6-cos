@@ -21,4 +21,4 @@
 #define SYS_mkdir  20
 #define SYS_close  21
 #define SYS_waitx  22 // TODO
-#define SYS_trace  22 // TODO
+#define SYS_trace  23 // TODO

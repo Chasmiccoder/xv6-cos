@@ -105,8 +105,14 @@ uptime:
  li a7, SYS_uptime
  ecall
  ret
+<<<<<<< HEAD
 .global waitx
 waitx:
  li a7, SYS_waitx
+=======
+.global trace
+trace:
+ li a7, SYS_trace
+>>>>>>> a622407307e2bc29b2939c50c428d8cf14044b9f
  ecall
  ret

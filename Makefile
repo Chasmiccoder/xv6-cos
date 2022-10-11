@@ -151,12 +151,16 @@ UPROGS=\
 	$U/_grind\
 	$U/_wc\
 	$U/_zombie\
+<<<<<<< HEAD
 	$U/_strace\
 	$U/_time\
 	$U/_schedulertest\
 	
 # TODO: Added _time, _schedulertest, _strace
 # explain these
+=======
+	$U/_strace # Add strace user program to Makefile \
+>>>>>>> a622407307e2bc29b2939c50c428d8cf14044b9f
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)

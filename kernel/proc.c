@@ -174,8 +174,11 @@ freeproc(struct proc *p)
   p->killed = 0;
   p->xstate = 0;
   p->state = UNUSED;
+<<<<<<< HEAD
 
   // (xv6-cos)
+=======
+>>>>>>> a622407307e2bc29b2939c50c428d8cf14044b9f
   p->trace_mask = 0;
 }
 
@@ -320,7 +323,10 @@ fork(void)
 
   pid = np->pid;
 
+<<<<<<< HEAD
   // (xv6-cos)
+=======
+>>>>>>> a622407307e2bc29b2939c50c428d8cf14044b9f
   // child process inherits trace mask from parent.
   np->trace_mask = p->trace_mask;
 

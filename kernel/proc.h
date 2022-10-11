@@ -104,6 +104,7 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+<<<<<<< HEAD
 
   // (xv6-cos)
 <<<<<<< HEAD
@@ -114,4 +115,7 @@ struct proc {
   uint rtime;                  // How long the process ran for
   uint ctime;                  // When the process was created
   uint etime;                  // When did the process exit
+=======
+  int trace_mask;              // For tracing syscall executions
+>>>>>>> a622407307e2bc29b2939c50c428d8cf14044b9f
 };
