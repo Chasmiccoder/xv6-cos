@@ -35,6 +35,7 @@ sys_wait(void)
   return wait(p);
 }
 
+// (xv6-cos)
 uint64
 sys_waitx(void)
 {
@@ -107,7 +108,6 @@ sys_uptime(void)
   return xticks;
 }
 
-
 // (xv6-cos)
 // adding trace syscall
 uint64
@@ -118,4 +118,16 @@ sys_trace(void)
   argint(0, &mask);
   myproc()->trace_mask = mask;
   return 0;
+}
+
+// (xv6-cos)
+uint64
+sys_set_priority(void)
+{
+  int priority, pid;
+  argint(0, &priority);
+  argint(1, &pid);
+
+  int old_static_priority = set_priority(priority, pid);
+  return old_static_priority;
 }

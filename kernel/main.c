@@ -23,6 +23,8 @@ main()
       printf("Using Round Robin Scheduling\n");
     } else if(SCHEDULING_ALGO == 1) {
       printf("Using First Come First Serve Scheduling\n");
+    } else if(SCHEDULING_ALGO == 2) {
+      printf("Using Priority Based Scheduling\n");
     }
 
     kinit();         // physical page allocator

@@ -68,6 +68,7 @@ CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 &
 # TODO explain
 # Round Robin            = 0
 # First Come First Serve = 1
+# Priority Based         = 2
 
 VAR_SCHEDULING_ALGO = -D SCHEDULING_ALGO=0
 
@@ -78,6 +79,10 @@ endif
 ifeq ($(CUSTOM_SCHEDULING_ALGO), FIRST_COME_FIRST_SERVE)
 	VAR_SCHEDULING_ALGO = -D SCHEDULING_ALGO=1
 endif
+ifeq ($(CUSTOM_SCHEDULING_ALGO), PRIORITY_BASED)
+	VAR_SCHEDULING_ALGO = -D SCHEDULING_ALGO=2
+endif
+
 
 CFLAGS += $(VAR_SCHEDULING_ALGO)
 ###########################################
@@ -154,6 +159,7 @@ UPROGS=\
 	$U/_strace\
 	$U/_time\
 	$U/_schedulertest\
+	$U/_setpriority\
 
 # (xv6-cos)
 # TODO: Added _time, _schedulertest, _strace

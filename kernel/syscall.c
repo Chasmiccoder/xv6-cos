@@ -83,7 +83,6 @@ argstr(int n, char *buf, int max)
 extern uint64 sys_fork(void);
 extern uint64 sys_exit(void);
 extern uint64 sys_wait(void);
-extern uint64 sys_waitx(void); // TODO
 extern uint64 sys_pipe(void);
 extern uint64 sys_read(void);
 extern uint64 sys_kill(void);
@@ -104,7 +103,9 @@ extern uint64 sys_mkdir(void);
 extern uint64 sys_close(void);
 
 // (xv6-cos)
+extern uint64 sys_waitx(void); // TODO
 extern uint64 sys_trace(void);  // added for implementing trace
+extern uint64 sys_set_priority(void);
 
 // (xv6-cos)
 // An array mapping syscall numbers from syscall.h
@@ -131,8 +132,11 @@ static uint64 (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
-[SYS_waitx]   sys_waitx,  // TODO
+
+// (xv6-cos)
+[SYS_waitx]   sys_waitx,
 [SYS_trace]   sys_trace,  // added for implementing trace
+[SYS_set_priority] sys_set_priority,
 };
 
 // (xv6-cos)
@@ -185,8 +189,6 @@ print_trace(struct proc* p, int syscall_num)
   }
   printf(" -> %d\n", p->trapframe->a0);
 }
-
-////////////////////////////////////////////////////////////////////////
 
 void
 syscall(void)

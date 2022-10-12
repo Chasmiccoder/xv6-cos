@@ -40,13 +40,21 @@ Scheduling - By default, `make` builds the os according to Round Robin Schedulin
 
 To build according to Round Robin Scheduling
 
-    make CUSTOM_SCHEDULING_ALGO=ROUND_ROBIN
+```
+make CUSTOM_SCHEDULING_ALGO=ROUND_ROBIN
+```
 
 To build according to First Come First Serve Scheduling
 
-    make CUSTOM_SCHEDULING_ALGO=FIRST_COME_FIRST_SERVE
+```
+make CUSTOM_SCHEDULING_ALGO=FIRST_COME_FIRST_SERVE
+```
 
+To build according to Priority Based Scheduling
 
+```
+make CUSTOM_SCHEDULING_ALGO=PRIORITY_BASED
+```
 
 
 ## xv6-riscv 💽
@@ -60,6 +68,7 @@ https://hub.docker.com/r/wtakuo/xv6-env
 
 Potential bugs:
 sys_waitx not accounted for in trace (in syscall.h)
+Update struct syscall_info syscall_structs[]
 
 xv6 password is "xv6" 
 

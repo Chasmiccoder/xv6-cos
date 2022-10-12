@@ -40,3 +40,4 @@ entry("uptime");
 # (xv6-cos)
 entry("waitx");
 entry("trace");
+entry("set_priority");

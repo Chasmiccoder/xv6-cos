@@ -150,6 +150,10 @@ found:
   p->rtime = 0;
   p->etime = 0;
   p->ctime = ticks;
+  
+  p->static_priority = 60; // by default 
+  p->when_started_sleeping = 0;
+  p->sleep_time = 0;
 
   return p;
 }
@@ -448,6 +452,7 @@ wait(uint64 addr)
   }
 }
 
+// (xv6-cos)
 // similar to wait, but returns the wait time and running time of the child process
 int
 waitx(uint64 addr, uint* wtime, uint* rtime)
@@ -500,6 +505,7 @@ waitx(uint64 addr, uint* wtime, uint* rtime)
   }
 }
 
+// (xv6-cos)
 void
 update_time()
 {
@@ -513,6 +519,25 @@ update_time()
   }
 }
 
+// (xv6-cos)
+int
+set_priority(int priority, int pid)
+{
+  struct proc *p;
+  int old_static_priority = 0;
+
+  for(p = proc; p < &proc[NPROC]; p++) {
+    acquire(&p->lock);
+    if(p->pid == pid) {
+      old_static_priority = p->static_priority;
+      p->static_priority = priority;
+    }
+    release(&p->lock);
+  }
+
+  return old_static_priority;
+}
+
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
 // Scheduler never returns.  It loops, doing:
@@ -523,17 +548,17 @@ update_time()
 void
 scheduler(void)
 {
+  // (xv6-cos)
   struct proc *p;
   struct cpu *c = mycpu();
-  
   c->proc = 0;
-  for(;;){
-    // Avoid deadlock by ensuring that devices can interrupt.
-    intr_on();
 
-    // (xv6-cos)
-    // round robin algorithm
-    if(SCHEDULING_ALGO == 0) {
+  if(SCHEDULING_ALGO == 0) { // Round Robin
+  
+    for(;;){
+      // Avoid deadlock by ensuring that devices can interrupt.
+      intr_on();
+
       for(p = proc; p < &proc[NPROC]; p++) {
         acquire(&p->lock);
         if(p->state == RUNNABLE) {
@@ -550,16 +575,19 @@ scheduler(void)
         }
         release(&p->lock);
       }
-    } else if(SCHEDULING_ALGO == 1) { // first come first serve
-      // struct proc *p2 = 0;
-      struct proc *first_come_process = 0;
-      c->proc = 0;
+    }
+  } else if(SCHEDULING_ALGO == 1) { // First Come First Serve
+    struct proc *first_come_process = 0;
 
-      int min_creation_time = 0;
+    for(;;) {
+      intr_on();
+
+      int min_creation_time = 0; // TODO set this to INF and see what happens
       first_come_process = 0;
 
       for(p = proc; p < &proc[NPROC]; p++) {
         acquire(&p->lock);
+
         if(p->state == RUNNABLE) {
           if(min_creation_time == 0 || first_come_process == 0) {
             min_creation_time = p->ctime;
@@ -579,9 +607,60 @@ scheduler(void)
         first_come_process->state = RUNNING;
         c->proc = first_come_process;
         swtch(&c->context, &first_come_process->context);
-
         c->proc = 0;
         release(&first_come_process->lock);
+          
+      }
+    }
+  } else if(SCHEDULING_ALGO == 2) { // Priority Based Scheduling
+    struct proc *most_priority_process = 0;
+
+    for(;;) {
+      intr_on();
+
+      int min_dynamic_priority = 200; // lesser this value, greater the priority
+      // TODO try changing this to 100 instead of 200
+
+      int niceness;
+      int dynamic_priority;
+      most_priority_process = 0; // process with the most priority
+
+      for(p = proc; p < &proc[NPROC]; p++) {
+        acquire(&p->lock);
+
+        if(p->state == RUNNABLE) {
+          
+          niceness = (int) ((float) p->sleep_time / (p->sleep_time + p->rtime)) * 10;
+
+          dynamic_priority = p->static_priority - niceness + 5;
+
+          if(dynamic_priority < 0) {
+            dynamic_priority = 0;
+          } else if(dynamic_priority  > 100) {
+            dynamic_priority = 100;
+          }
+
+          if(min_dynamic_priority > dynamic_priority) {
+            min_dynamic_priority = dynamic_priority;
+            if(most_priority_process != 0) {
+              release(&most_priority_process->lock);
+            }
+
+            most_priority_process = p;
+            continue;
+          }
+        }
+
+        release(&p->lock);
+      }
+
+      if(most_priority_process != 0) {
+        most_priority_process->state = RUNNING;
+        c->proc = most_priority_process;
+        swtch(&c->context, &most_priority_process->context);
+
+        c->proc = 0;
+        release(&most_priority_process->lock);
       }
     }
   }
@@ -667,6 +746,9 @@ sleep(void *chan, struct spinlock *lk)
   p->chan = chan;
   p->state = SLEEPING;
 
+  // (xv6-cos)
+  p->when_started_sleeping = ticks; // update the time at which the process slept
+
   sched();
 
   // Tidy up.
@@ -688,6 +770,10 @@ wakeup(void *chan)
     if(p != myproc()){
       acquire(&p->lock);
       if(p->state == SLEEPING && p->chan == chan) {
+        
+        // (xv6-cos)
+        p->sleep_time += ticks - p->when_started_sleeping;
+
         p->state = RUNNABLE;
       }
       release(&p->lock);

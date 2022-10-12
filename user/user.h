@@ -4,7 +4,6 @@ struct stat;
 int fork(void);
 int exit(int) __attribute__((noreturn));
 int wait(int*);
-int waitx(int*, int* /* wtime */, int* /* rtime */);
 int pipe(int*);
 int write(int, const void*, int);
 int read(int, void*, int);
@@ -24,9 +23,10 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 
-// (xv6-cos)
+// (xv6-cos) system calls
 int trace(int); // adding trace syscall
-
+int waitx(int*, int* /* wtime */, int* /* rtime */);
+int set_priority(int /* priority */, int /* pid */);
 
 // ulib.c
 int stat(const char*, struct stat*);

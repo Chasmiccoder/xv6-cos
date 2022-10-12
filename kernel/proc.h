@@ -108,7 +108,11 @@ struct proc {
   // (xv6-cos)
   int trace_mask;              // For tracing syscall executions
 
-  uint rtime;                  // How long the process ran for
-  uint ctime;                  // When the process was created
-  uint etime;                  // When did the process exit
+  uint rtime;                  // Number of ticks the process ran for
+  uint ctime;                  // When the process was created (in terms of ticks)
+  uint etime;                  // When did the process exit (in terms of ticks)
+
+  int static_priority;         // For Priority Based Scheduling. Lower the static_priority, higher the priority
+  uint when_started_sleeping;  // When did the process start sleeping (in terms of ticks)
+  uint sleep_time;             // Number of ticks spent sleeping
 };
