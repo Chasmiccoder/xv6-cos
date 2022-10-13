@@ -25,6 +25,8 @@ main()
       printf("Using First Come First Serve Scheduling\n");
     } else if(SCHEDULING_ALGO == 2) {
       printf("Using Priority Based Scheduling\n");
+    } else if(SCHEDULING_ALGO == 3) {
+      printf("Using Lottery Based Scheduling\n");
     }
 
     kinit();         // physical page allocator

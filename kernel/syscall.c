@@ -106,6 +106,7 @@ extern uint64 sys_close(void);
 extern uint64 sys_waitx(void); // TODO
 extern uint64 sys_trace(void);  // added for implementing trace
 extern uint64 sys_set_priority(void);
+extern uint64 sys_settickets(void);
 
 // (xv6-cos)
 // An array mapping syscall numbers from syscall.h
@@ -137,6 +138,7 @@ static uint64 (*syscalls[])(void) = {
 [SYS_waitx]   sys_waitx,
 [SYS_trace]   sys_trace,  // added for implementing trace
 [SYS_set_priority] sys_set_priority,
+[SYS_settickets]   sys_settickets,
 };
 
 // (xv6-cos)

@@ -41,3 +41,4 @@ entry("uptime");
 entry("waitx");
 entry("trace");
 entry("set_priority");
+entry("settickets");

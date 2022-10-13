@@ -115,4 +115,6 @@ struct proc {
   int static_priority;         // For Priority Based Scheduling. Lower the static_priority, higher the priority
   uint when_started_sleeping;  // When did the process start sleeping (in terms of ticks)
   uint sleep_time;             // Number of ticks spent sleeping
+
+  uint tickets;                // For Lottery Based Scheduling. Number of tickets owned by the process
 };

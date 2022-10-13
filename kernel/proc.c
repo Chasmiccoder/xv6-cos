@@ -151,9 +151,13 @@ found:
   p->etime = 0;
   p->ctime = ticks;
   
+  // for priority based scheduling
   p->static_priority = 60; // by default 
   p->when_started_sleeping = 0;
   p->sleep_time = 0;
+
+  // for lottery based scheduling
+  p->tickets = 1; // by default
 
   return p;
 }
@@ -310,6 +314,9 @@ fork(void)
 
   // copy saved user registers.
   *(np->trapframe) = *(p->trapframe);
+
+  // (xv6-cos) for Lottery Based Scheduling
+  np->tickets = 1; // by default
 
   // Cause fork to return 0 in the child.
   np->trapframe->a0 = 0;
@@ -538,6 +545,64 @@ set_priority(int priority, int pid)
   return old_static_priority;
 }
 
+// (xv6-cos)
+int settickets(int number, int pid) {
+  struct proc *p = myproc();
+  p->tickets = number;
+  return pid;
+}
+
+int custom_random(unsigned long *ctx) {
+    /*
+    * Taken from the do_rand() function in user/grind.c
+    * 
+    * Compute x = (7^5 * x) mod (2^31 - 1)
+    * without overflowing 31 bits:
+    *      (2^31 - 1) = 127773 * (7^5) + 2836
+    * From "Random number generators: good ones are hard to find",
+    * Park and Miller, Communications of the ACM, vol. 31, no. 10,
+    * October 1988, p. 1195.
+    */
+
+    long hi, lo, x;
+
+    /* Transform to [1, 0x7ffffffe] range. */
+    x = (*ctx % 0x7ffffffe) + 1;
+    hi = x / 127773;
+    lo = x % 127773;
+    x = 16807 * lo - 2836 * hi;
+    if (x < 0)
+        x += 0x7fffffff;
+    /* Transform to [0, 0x7ffffffd] range. */
+    x--;
+    *ctx = x;
+    return (x);
+}
+
+int is_the_process_lucky(float probability) {
+    /*
+
+    This function first generates a random number from [0, LONG_MAX - 2], which is good enough
+    Using the number of ticks as a seed
+
+    The lottery based probability is passed as an argument to this function
+    This probability is scaled to match the range [0, LONG_MAX - 2] from probability to scaled_prob
+    If the random number generated is lesser than or equal to the scaled probability, 
+    then the process is given the cpu
+    */
+
+    long unsigned seed = ticks % (2147483647 - 2);
+    int r = custom_random(&seed);
+
+    float scaled_prob = (float) probability * (2147483647 - 2);
+
+    if(r < scaled_prob) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
 // Scheduler never returns.  It loops, doing:
@@ -548,6 +613,15 @@ set_priority(int priority, int pid)
 void
 scheduler(void)
 {
+  /*
+  How preemption and nonpreemption work -
+  RR is preemptive -
+  since swtch is inside for(p = proc ...), context switch happens (after every 100 ms, by default)
+  
+  In non-preemptive algos like FCFS and PBS, the swtch happens outside the for(p = proc ...) loop, which selects
+  a process first, and then does swtch. The same process gets switched until it gets completed (since for(p = proc ...) keeps picking it)
+  */
+
   // (xv6-cos)
   struct proc *p;
   struct cpu *c = mycpu();
@@ -567,7 +641,7 @@ scheduler(void)
           // before jumping back to us.
           p->state = RUNNING;
           c->proc = p;
-          swtch(&c->context, &p->context);
+          swtch(&c->context, &p->context); 
 
           // Process is done running for now.
           // It should have changed its p->state before coming back.
@@ -576,13 +650,26 @@ scheduler(void)
         release(&p->lock);
       }
     }
-  } else if(SCHEDULING_ALGO == 1) { // First Come First Serve
+  } else if(SCHEDULING_ALGO == 1) { // First Come First Serve    
+    /*
+    How this works -
+    Once we've identified that FCFS is to be used, the function runs the infinite for loop for(;;)
+    
+    Then, we loop over all processes to find a process with the least creation time
+    In the first iteration of for(p = proc ...), the process seen is set as the process that has come first (first_come_process)
+    Then, the rest of the process creation times are checked
+    Any time we find a process with a lower creation time, first_come_process gets updated,
+    and at the end of for(p = proc ...) we would have found the process with the least creation time
+
+    Then, this process' state is changed to RUNNING, and it is assigned the CPU 
+    */
+
     struct proc *first_come_process = 0;
 
     for(;;) {
       intr_on();
 
-      int min_creation_time = 0; // TODO set this to INF and see what happens
+      int min_creation_time = 0;
       first_come_process = 0;
 
       for(p = proc; p < &proc[NPROC]; p++) {
@@ -608,8 +695,7 @@ scheduler(void)
         c->proc = first_come_process;
         swtch(&c->context, &first_come_process->context);
         c->proc = 0;
-        release(&first_come_process->lock);
-          
+        release(&first_come_process->lock);   
       }
     }
   } else if(SCHEDULING_ALGO == 2) { // Priority Based Scheduling
@@ -663,6 +749,47 @@ scheduler(void)
         release(&most_priority_process->lock);
       }
     }
+  } else if(SCHEDULING_ALGO == 3) { // Lottery Based Scheduling
+    for(;;){
+        // Avoid deadlock by ensuring that devices can interrupt.
+        intr_on();
+
+        for(p = proc; p < &proc[NPROC]; p++) {
+          acquire(&p->lock);
+          if(p->state == RUNNABLE) {
+            
+            // find the total number of tickets held by all processes
+            int total_tickets = 0;
+
+            // release(&p->lock);
+            struct proc *t;
+            for(t = proc; t < &proc[NPROC]; t++) {
+              // acquire(&t->lock);
+              if(t->state == RUNNABLE) {
+                total_tickets += t->tickets;
+              }
+              // release(&t->lock);
+            }
+            
+            // acquire(&p->lock);
+            float success_probability = (float) p->tickets / total_tickets;
+
+            if(success_probability < 0 || success_probability > 1) {
+              printf("%f\n", success_probability);
+              panic("HE");
+            }
+            
+            if(is_the_process_lucky(success_probability)) {
+              p->state = RUNNING;
+              c->proc = p;
+              swtch(&c->context, &p->context); 
+              c->proc = 0;
+            }
+          }
+          release(&p->lock);
+        }
+      }
+      
   }
 }
 

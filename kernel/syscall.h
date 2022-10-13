@@ -25,3 +25,4 @@
 #define SYS_waitx  22
 #define SYS_trace  23
 #define SYS_set_priority 24
+#define SYS_settickets 25

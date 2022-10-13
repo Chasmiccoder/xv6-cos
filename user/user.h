@@ -27,6 +27,8 @@ int uptime(void);
 int trace(int); // adding trace syscall
 int waitx(int*, int* /* wtime */, int* /* rtime */);
 int set_priority(int /* priority */, int /* pid */);
+int settickets(int /* number */, int /* pid */);
+
 
 // ulib.c
 int stat(const char*, struct stat*);

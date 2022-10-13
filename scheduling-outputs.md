@@ -172,3 +172,35 @@ $
 ```
 
 Note: Some outputs of the processes appear merged due to race condition
+
+## Lottery Based Scheduling
+
+```
+$ schedulertest
+process number: 0    pid: 4
+process number: 1    pid: 5
+process number: 2    pid: 6
+process number: 3    pid: 7
+process number: 4    pid: 8
+process number: 5    pid: 9
+process number: 6    pid: 10
+process number: 7    pid: 11
+process number: 8    pid: 12
+process number: 9    pid: 13
+Proc 6 finished (90)
+Proc 7 finished (90)
+Proc 9 finished (90)
+Proc 5 finished (10)
+Proc 8 finished (90)
+PPPrroorco cc2   f01  ifniinsihsehde d(f i(1n0i)1
+0s)h
+PerodPc  (31r of0icn)i
+sh ed4  (f1i0)n
+ished (10)
+
+Average rtime 67,  wtime 19
+$
+```
+
+This output makes sense since processes with more tickets are getting completed before (greater probability of getting cpu time)
+The random output towards the end is because of race condition

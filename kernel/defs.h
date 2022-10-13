@@ -111,6 +111,7 @@ void            procdump(void);
 void            update_time(void);
 int             waitx(uint64, uint*, uint*);
 int             set_priority(int, int);
+int             settickets(int, int);
 
 
 // swtch.S

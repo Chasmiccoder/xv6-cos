@@ -131,3 +131,15 @@ sys_set_priority(void)
   int old_static_priority = set_priority(priority, pid);
   return old_static_priority;
 }
+
+// (xv6-cos)
+uint64
+sys_settickets(void)
+{
+  int tickets, pid;
+
+  argint(0, &tickets);
+  argint(1, &pid);
+  pid = settickets(pid, tickets);
+  return pid;
+}

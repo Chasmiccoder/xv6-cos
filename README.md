@@ -21,39 +21,39 @@ Run the docker image (created by [wtakuo](https://hub.docker.com/r/wtakuo/xv6-en
 
     docker run -it --rm -v $(pwd):/home/xv6/xv6-riscv wtakuo/xv6-env
 
-Run the Makefile for xv6-cos
-
-    make
-
-To boot into xv6-cos
+To build and boot into xv6-cos
 
     make qemu
 
-Any time you modify xv6-cos, you need to run `make clean`, then `make`, then `make qemu` to see the changes.
-`make clean` is important to see changes in the scheduling algorithm
-
+Any time you want to change the scheduling algorithm, you need to run `make clean`, then `make qemu` to see the changes.
 Use `ctrl+a` followed by `x` to exit xv6-cos
 
 ## Usage
 
-Scheduling - By default, `make` builds the os according to Round Robin Scheduling
+Scheduling - By default, `make qemu` builds the os according to Round Robin Scheduling
 
-To build according to Round Robin Scheduling
-
-```
-make CUSTOM_SCHEDULING_ALGO=ROUND_ROBIN
-```
-
-To build according to First Come First Serve Scheduling
+To build and run according to Round Robin Scheduling
 
 ```
-make CUSTOM_SCHEDULING_ALGO=FIRST_COME_FIRST_SERVE
+make qemu CUSTOM_SCHEDULING_ALGO=RR
 ```
 
-To build according to Priority Based Scheduling
+To build and run according to First Come First Serve Scheduling
 
 ```
-make CUSTOM_SCHEDULING_ALGO=PRIORITY_BASED
+make qemu CUSTOM_SCHEDULING_ALGO=FCFS CPUS=2
+```
+
+To build and run according to Priority Based Scheduling
+
+```
+make qemu CUSTOM_SCHEDULING_ALGO=PBS CPUS=2
+```
+
+To build and run according to Lottery Based Scheduling
+
+```
+make qemu CUSTOM_SCHEDULING_ALGO=LBS
 ```
 
 
@@ -75,6 +75,6 @@ xv6 password is "xv6"
 Make with custom scheduling algo -
 
 
-    make CUSTOM_SCHEDULING_ALGO=FIRST_COME_FIRST_SERVE
+    make CUSTOM_SCHEDULING_ALGO=FCFS
 
 -->
