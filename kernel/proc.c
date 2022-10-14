@@ -168,6 +168,8 @@ found:
   
   p->state = USED;
 
+  p->alarm_flag = 0;
+
   return p;
 }
 

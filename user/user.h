@@ -28,6 +28,8 @@ int trace(int); // adding trace syscall
 int waitx(int*, int* /* wtime */, int* /* rtime */);
 int set_priority(int /* priority */, int /* pid */);
 int settickets(int /* number */, int /* pid */);
+int sigalarm(int , void (*)());
+int sigreturn(void);
 
 
 // ulib.c

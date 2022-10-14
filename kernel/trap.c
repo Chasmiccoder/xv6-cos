@@ -65,6 +65,13 @@ usertrap(void)
     intr_on();
 
     syscall();
+
+    // (xv6-cos)
+    /*  } else if(r_scause()== 0xd || r_scause()== 0xf){ 
+    int cpf = cow_pagefault(p->pagetable, r_sepc());
+    if (cpf != 0 || r_sepc() >= p->sz)
+      p->killed = 1;*/
+
   } else if((which_dev = devintr()) != 0){
     // ok
   } else {
@@ -77,8 +84,34 @@ usertrap(void)
     exit(-1);
 
   // give up the CPU if this is a timer interrupt.
+  // if(which_dev == 2)
+  //   yield();
+
+
+  // (xv6-cos)
+  // give up the CPU if this is a timer interrupt.
   if(which_dev == 2)
+  {
+    // which_dev = devintr();
+    if (which_dev!=0 && !(p->alarm_flag))
+    {
+      // cos: save trapframe before alarm
+
+      p->alarm_ticks_left--;
+      if (p->alarm_ticks_left == 0)
+      {
+      p->alarm_flag = 1;
+            struct trapframe* alarm_tf = (struct trapframe*)kalloc();
+      memmove(alarm_tf, p->trapframe, sizeof(struct trapframe));
+      p->alarm_saved_tf = alarm_tf;
+
+        p->alarm_ticks_left = p->alarm_ticks;
+        p->trapframe->epc = (uint64) p->alarm_handler;
+      }
+      // p->alarm_flag = 0;
+    }
     yield();
+  }
 
   usertrapret();
 }

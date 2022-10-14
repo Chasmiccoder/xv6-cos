@@ -120,4 +120,11 @@ struct proc {
 
   int queue_id;                // For Multilevel Feedback Queue. Keeps track of which queue the process is in
   int last_wait_time;          // Time spend waiting, so that aging can be applied 
+
+  // sigalarm + sigreturn
+  void (*alarm_handler)();              // Address of the signal handler
+  int alarm_flag;                       // Flag to indicate whether the alarm signal has been sent or not
+  int alarm_ticks;                      // Number of ticks after which the alarm signal should be sent
+  int alarm_ticks_left;                 // Number of ticks remaining before the alarm signal is sent
+  struct trapframe* alarm_saved_tf;     // Saved trapframe for the alarm signal
 };

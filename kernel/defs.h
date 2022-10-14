@@ -67,6 +67,11 @@ void*           kalloc(void);
 void            kfree(void *);
 void            kinit(void);
 
+// (xv6-cos) kalloc.c
+// uint64          refind(uint64);
+// int             cow_pagefault(pagetable_t, uint64);
+// void            krefinc(uint64 pa);
+
 // log.c
 void            initlog(int, struct superblock*);
 void            log_write(struct buf*);

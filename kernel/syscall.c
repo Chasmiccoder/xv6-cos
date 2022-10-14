@@ -107,6 +107,8 @@ extern uint64 sys_waitx(void); // TODO
 extern uint64 sys_trace(void);  // added for implementing trace
 extern uint64 sys_set_priority(void);
 extern uint64 sys_settickets(void);
+extern uint64 sys_sigalarm(void);
+extern uint64 sys_sigreturn(void);
 
 // (xv6-cos)
 // An array mapping syscall numbers from syscall.h
@@ -135,10 +137,12 @@ static uint64 (*syscalls[])(void) = {
 [SYS_close]   sys_close,
 
 // (xv6-cos)
-[SYS_waitx]   sys_waitx,
-[SYS_trace]   sys_trace,  // added for implementing trace
+[SYS_waitx]        sys_waitx,
+[SYS_trace]        sys_trace,  // added for implementing trace
 [SYS_set_priority] sys_set_priority,
 [SYS_settickets]   sys_settickets,
+[SYS_sigalarm]     sys_sigalarm,
+[SYS_sigreturn]    sys_sigreturn,
 };
 
 // (xv6-cos)
@@ -167,6 +171,12 @@ struct syscall_info syscall_structs[] =
 [SYS_mkdir]   (struct syscall_info) {SYS_mkdir, 1,"mkdir"},
 [SYS_close]   (struct syscall_info) {SYS_close, 1,"close"},
 [SYS_trace]   (struct syscall_info) {SYS_trace, 1,"trace"},
+
+[SYS_set_priority]   (struct syscall_info) {SYS_set_priority, 1,"trace"},
+[SYS_settickets]   (struct syscall_info) {SYS_settickets, 1,"settickets"},
+[SYS_sigalarm]   (struct syscall_info) {SYS_sigalarm, 2,"sigalarm"},
+[SYS_sigreturn]   (struct syscall_info) {SYS_sigreturn, 0,"sigreturn"},
+
 };
 
 // (xv6-cos)

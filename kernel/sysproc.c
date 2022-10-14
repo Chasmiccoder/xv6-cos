@@ -143,3 +143,41 @@ sys_settickets(void)
   pid = settickets(pid, tickets);
   return pid;
 }
+
+// (xv6-cos)
+int
+sys_sigalarm(void)
+{
+  int ticks;
+  void (*handler)();
+
+  argint(0, &ticks);
+  argaddr(1, (uint64*)&handler);
+
+  myproc()->alarm_handler = handler;
+  myproc()->alarm_ticks = ticks;
+  myproc()->alarm_ticks_left = ticks;
+  myproc()->alarm_flag = 0;
+
+  return 0;
+}
+
+// (xv6-cos)
+int
+sys_sigreturn(void)
+{
+  // get current process and restore trapframe
+  struct proc *p = myproc();
+  memmove(p->trapframe, p->alarm_saved_tf, sizeof(struct trapframe));
+
+  // (*p->trapframe) = p->alarm_saved_tf;
+
+  // free alarm trapframe
+  kfree(p->alarm_saved_tf);
+
+  // reset alarm-related fields
+  // p->alarm_saved_tf = 0;
+  p->alarm_flag = 0;
+
+  return p->trapframe->a0;
+}

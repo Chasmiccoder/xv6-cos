@@ -99,6 +99,16 @@ walk(pagetable_t pagetable, uint64 va, int alloc)
       *pte = PA2PTE(pagetable) | PTE_V;
     }
   }
+
+  // (xv6-cos)
+  /*
+  uint64 paaa = (uint64) &pagetable[PX(0, va)];
+  // printf("PA: %d\n", PTE2PA(paaa));
+  if (PTE2PA(paaa) > PHYSTOP){
+    // printf("WTF\n");
+  }
+*/
+
   return &pagetable[PX(0, va)];
 }
 
@@ -308,6 +318,7 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
   pte_t *pte;
   uint64 pa, i;
   uint flags;
+  /*  int setflags = 0;*/
   char *mem;
 
   for(i = 0; i < sz; i += PGSIZE){
@@ -325,6 +336,21 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
       goto err;
     }
   }
+
+  // (xv6-cos)
+  /*    if (*pte & PTE_W){
+    flags |= PTE_COW; // copy on write
+    flags &= ~PTE_W;  // make read-only
+    setflags = 1;
+    }
+    if((mappages(new, i, PGSIZE, pa, flags)) != 0)
+      goto err;
+    if (setflags){
+    *pte = PA2PTE(pa);
+    *pte |= flags;  // apply flags to *pte
+    }
+    krefinc(pa);    // increment ref count of page
+*/
   return 0;
 
  err:
@@ -355,6 +381,13 @@ copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
 
   while(len > 0){
     va0 = PGROUNDDOWN(dstva);
+
+    /*
+    int cpf = cow_pagefault(pagetable, va0);
+    if(cpf != 0)
+      return -1;
+*/
+
     pa0 = walkaddr(pagetable, va0);
     if(pa0 == 0)
       return -1;

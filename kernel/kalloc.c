@@ -21,12 +21,65 @@ struct run {
 struct {
   struct spinlock lock;
   struct run *freelist;
+  /*  int count[PHYSTOP >> PGSHIFT];*/
 } kmem;
+
+
+// (xv6-cos)
+/*
+uint64
+refind(uint64 pa)
+{
+  return pa >> PGSHIFT;
+}
+void krefinc(uint64 pa)
+{
+  acquire(&kmem.lock);
+  ++kmem.count[refind(pa)];
+  release(&kmem.lock);
+}
+int
+cow_pagefault(pagetable_t pagetable, uint64 va)
+{
+  if (va>=MAXVA)
+    return -1;
+  pte_t *pte = walk(pagetable, va, 0);
+  if (!pte || (*pte & PTE_V) == 0 || (*pte & PTE_U) == 0)
+    return -1;
+  uint64 pa1 = PTE2PA(*pte);
+  uint64 pa2 = (uint64)kalloc();
+  if (pa2 == 0)
+    return -1;
+  acquire(&kmem.lock);
+  if (kmem.count[refind(pa1)] == 1) {
+    *pte &= ~PTE_COW;
+    *pte |= PTE_W;
+  }
+  else {
+    memmove((void*)pa2, (void*)pa1, PGSIZE);
+    memmove((void*)pa2, (void*)pa1, PGSIZE);
+    kmem.count[refind(pa1)]--;
+    kmem.count[refind(pa2)]++;
+    *pte = PA2PTE(pa2);
+    *pte |= ~PTE_COW;
+    *pte |= PTE_W;
+    *pte |= PTE_V | PTE_U | PTE_R | PTE_X;
+  }
+  release(&kmem.lock);
+  return 0;
+}
+*/
 
 void
 kinit()
 {
   initlock(&kmem.lock, "kmem");
+  
+  /*  for (int i = 0; i < (PHYSTOP >> PGSHIFT); i++)
+  {
+    kmem.count[i] = 0;
+  }*/
+  
   freerange(end, (void*)PHYSTOP);
 }
 
@@ -36,6 +89,7 @@ freerange(void *pa_start, void *pa_end)
   char *p;
   p = (char*)PGROUNDUP((uint64)pa_start);
   for(; p + PGSIZE <= (char*)pa_end; p += PGSIZE)
+    // kmem.count[refind((uint64)p)] = 1;
     kfree(p);
 }
 
@@ -48,8 +102,21 @@ kfree(void *pa)
 {
   struct run *r;
 
+  /*  if(((uint64)pa % PGSIZE) != 0)
+    panic("kfree 1");
+  if((char*)pa < end)
+    panic("kfree 2");
+  if ((uint64)pa >= PHYSTOP)
+    panic("kfree 3");*/
+
   if(((uint64)pa % PGSIZE) != 0 || (char*)pa < end || (uint64)pa >= PHYSTOP)
     panic("kfree");
+  
+  /*  // cos: Decrease number of references to page
+  acquire(&kmem.lock);
+  // cos: If no processs using this page, free it.
+  if ((--kmem.count[refind((uint64)pa)]) <= 0)
+  {*/
 
   // Fill with junk to catch dangling refs.
   memset(pa, 1, PGSIZE);
@@ -72,8 +139,13 @@ kalloc(void)
 
   acquire(&kmem.lock);
   r = kmem.freelist;
+  
   if(r)
+  // {
     kmem.freelist = r->next;
+  /*  kmem.count[refind((uint64)r)] = 1;
+  }*/
+
   release(&kmem.lock);
 
   if(r)

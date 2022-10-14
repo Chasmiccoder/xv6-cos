@@ -170,9 +170,10 @@ UPROGS=\
 	$U/_time\
 	$U/_schedulertest\
 	$U/_setpriority\
+	$U/_alarmtest\
 
 # (xv6-cos)
-# Added time.c, schedulertest.c, strace.c, 
+# Added strace.c, time.c, schedulertest.c, setpriority.c, alarmtest.c
 # to the user programs
 
 fs.img: mkfs/mkfs README $(UPROGS)
