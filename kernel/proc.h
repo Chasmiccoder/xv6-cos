@@ -117,4 +117,7 @@ struct proc {
   uint sleep_time;             // Number of ticks spent sleeping
 
   uint tickets;                // For Lottery Based Scheduling. Number of tickets owned by the process
+
+  int queue_id;                // For Multilevel Feedback Queue. Keeps track of which queue the process is in
+  int last_wait_time;          // Time spend waiting, so that aging can be applied 
 };

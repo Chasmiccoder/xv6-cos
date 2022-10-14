@@ -29,6 +29,7 @@ OBJS = \
   $K/kernelvec.o \
   $K/plic.o \
   $K/virtio_disk.o \
+  $K/mlfqueue.o \
 
 # riscv64-unknown-elf- or riscv64-linux-gnu-
 # perhaps in /opt/riscv/bin
@@ -65,10 +66,14 @@ CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 &
 
 # (xv6-cos)
 ########## Scheduling Algorithms ##########
-# TODO explain
-# Round Robin            = 0
-# First Come First Serve = 1
-# Priority Based         = 2
+# The user sets the value for CUSTOM_SCHEDULING_ALGO Then, the variable
+# VAR_SCHEDULING_ALGO gets adjusted according to the algo, and defines
+# a macro named SCHEDULING_ALGO, which specifies the algorithm to be used.
+
+# Round Robin               = 0
+# First Come First Serve    = 1
+# Priority Based            = 2
+# Multilevel Feedback Queue = 4
 
 VAR_SCHEDULING_ALGO = -D SCHEDULING_ALGO=0
 
@@ -84,6 +89,9 @@ ifeq ($(CUSTOM_SCHEDULING_ALGO), PBS)
 endif
 ifeq ($(CUSTOM_SCHEDULING_ALGO), LBS)
 	VAR_SCHEDULING_ALGO = -D SCHEDULING_ALGO=3
+endif
+ifeq ($(CUSTOM_SCHEDULING_ALGO), MLFQ)
+	VAR_SCHEDULING_ALGO = -D SCHEDULING_ALGO=4
 endif
 
 CFLAGS += $(VAR_SCHEDULING_ALGO)
@@ -164,8 +172,8 @@ UPROGS=\
 	$U/_setpriority\
 
 # (xv6-cos)
-# TODO: Added _time, _schedulertest, _strace
-# explain these
+# Added time.c, schedulertest.c, strace.c, 
+# to the user programs
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)

@@ -33,7 +33,7 @@ void main() {
     }
 
     for(;n > 0; n--) {
-      if(waitx(0,&rtime,&wtime) >= 0) {
+      if(waitx(0,&wtime,&rtime) >= 0) {
         trtime += rtime;
         twtime += wtime;
       }
@@ -63,7 +63,7 @@ void main() {
     }
 
     for(;n > 0; n--) {
-      if(waitx(0,&rtime,&wtime) >= 0) {
+      if(waitx(0,&wtime,&rtime) >= 0) {
         trtime += rtime;
         twtime += wtime;
       }
@@ -91,18 +91,29 @@ void main() {
             for (volatile int i = 0; i < 1000000000; i++) {} // CPU bound process
           }
 
+          // for correct order = decreasing order
           printf("Proc %d finished (%d)\n", n, 100 - n * 5); // print the process index and priority
+
+          // for correct order = increasing order
+          // printf("Proc %d finished (%d)\n", n, 5 + n * 10); // print the process index and priority
+
           exit(0);
       } else {  
 
         // set_priority(80, pid); // Will only matter for PBS, set lower priority for IO bound processes
+        
+        // for correct order = decreasing order
         set_priority(100 - n * 5, pid); // TODO. This 100 - n * 10 is a good test for PBS
+
+        // for correct order = increasing order 
+        // set_priority(5 + n * 10, pid);
+
         fprintf(2, "process number: %d    pid: %d\n", n, pid);
       }
   }
 
   for(;n > 0; n--) {
-      if(waitx(0,&rtime,&wtime) >= 0) {
+      if(waitx(0,&wtime,&rtime) >= 0) {
           trtime += rtime;
           twtime += wtime;
       }
@@ -131,7 +142,7 @@ void main() {
         if(n < 6)
           printf("(10)\n");
         else
-          printf("(90)\n");
+          printf("(200)\n");
 
         exit(0);
       } else {
@@ -140,14 +151,14 @@ void main() {
           settickets(10, pid);
           fprintf(2, "process number: %d    pid: %d\n", n, pid);
         } else {
-          settickets(90, pid);
+          settickets(200, pid);
           fprintf(2, "process number: %d    pid: %d\n", n, pid);
         }
       }
     }
 
     for(;n > 0; n--) {
-      if(waitx(0,&rtime,&wtime) >= 0) {
+      if(waitx(0,&wtime,&rtime) >= 0) {
         trtime += rtime;
         twtime += wtime;
       }

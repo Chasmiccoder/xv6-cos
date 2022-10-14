@@ -6,6 +6,9 @@
 #include "proc.h"
 #include "defs.h"
 
+// (xv6-cos)
+#include "mlfqueue.h"
+
 struct cpu cpus[NCPU];
 
 struct proc proc[NPROC];
@@ -123,7 +126,6 @@ allocproc(void)
 
 found:
   p->pid = allocpid();
-  p->state = USED;
 
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
@@ -147,6 +149,7 @@ found:
   p->context.sp = p->kstack + PGSIZE;
 
   // (xv6-cos)
+  // initialize the process' parameters
   p->rtime = 0;
   p->etime = 0;
   p->ctime = ticks;
@@ -158,6 +161,12 @@ found:
 
   // for lottery based scheduling
   p->tickets = 1; // by default
+
+  // for multilevel feedback scheduling
+  p->queue_id = -1; // the process is not assigned a queue yet
+  p->last_wait_time = 0;
+  
+  p->state = USED;
 
   return p;
 }
@@ -516,11 +525,24 @@ waitx(uint64 addr, uint* wtime, uint* rtime)
 void
 update_time()
 {
+  /*
+  Updates a process' running time and the last time it waited
+  The last time aspect is used to assist aging during MLFQ scheduling
+  */
+
   struct proc* p;
   for(p = proc; p < &proc[NPROC]; p++) {
     acquire(&p->lock);
     if(p->state == RUNNING) {
       p->rtime++;
+    } else if(p->state == SLEEPING) {
+      if(SCHEDULING_ALGO == 4) {
+        p->last_wait_time++;
+      }
+    } else if(p->state == RUNNABLE) {
+      if(SCHEDULING_ALGO == 4) {
+        p->last_wait_time++;
+      }
     }
     release(&p->lock);
   }
@@ -530,6 +552,12 @@ update_time()
 int
 set_priority(int priority, int pid)
 {
+  /*
+  Used for PBS Scheduling
+  Iterates through all the processes and finds a process p with the matching pid
+  Then it updates its priority
+  */
+
   struct proc *p;
   int old_static_priority = 0;
 
@@ -546,7 +574,13 @@ set_priority(int priority, int pid)
 }
 
 // (xv6-cos)
-int settickets(int number, int pid) {
+int 
+settickets(int number, int pid)
+{
+  /*
+  Used in LBS Scheduling
+  Overwrites the tickets held by a process
+  */
   struct proc *p = myproc();
   p->tickets = number;
   return pid;
@@ -615,47 +649,49 @@ scheduler(void)
 {
   /*
   How preemption and nonpreemption work -
-  RR is preemptive -
-  since swtch is inside for(p = proc ...), context switch happens (after every 100 ms, by default)
+  RR is preemptive - since swtch is inside for(p = proc ...), context switch happens 
+  (after every 100 ms, by default)
   
-  In non-preemptive algos like FCFS and PBS, the swtch happens outside the for(p = proc ...) loop, which selects
-  a process first, and then does swtch. The same process gets switched until it gets completed (since for(p = proc ...) keeps picking it)
+  In non-preemptive algos like FCFS and PBS, the swtch happens outside the for(p = proc ...) loop, 
+  which selects a process first, and then does swtch. It runs the process throughout the time 
+  quantum (100ms), and then we reach the next iteration of for(;;)
+  The scheduler picks the same process over and over again (through its protocol [FCFS/PBS]),
+  until the process gets completed (after which the next process is chosen)
   */
 
   // (xv6-cos)
-  struct proc *p;
-  struct cpu *c = mycpu();
-  c->proc = 0;
+  struct proc *p;                                                   // used to iterate over all processes in the process table proc
+  struct cpu *c = mycpu();                                          // pick the cpu for which the process will run on
+  c->proc = 0;                                                      // setting the cpu's process to null initially
 
-  if(SCHEDULING_ALGO == 0) { // Round Robin
+  if(SCHEDULING_ALGO == 0) {                                        // Round Robin Scheduling (default)
   
     for(;;){
-      // Avoid deadlock by ensuring that devices can interrupt.
-      intr_on();
+      intr_on();                                                    // avoid deadlock by ensuring that devices can interrupt
 
-      for(p = proc; p < &proc[NPROC]; p++) {
-        acquire(&p->lock);
+      for(p = proc; p < &proc[NPROC]; p++) {                        // iterate through the process table and for each process,
+        acquire(&p->lock);                                          // acquire a lock and run it for 1 time quantum (handled by swtch)
+        
         if(p->state == RUNNABLE) {
-          // Switch to chosen process.  It is the process's job
-          // to release its lock and then reacquire it
-          // before jumping back to us.
-          p->state = RUNNING;
-          c->proc = p;
-          swtch(&c->context, &p->context); 
-
+          p->state = RUNNING;                                       // Switch to chosen process. It is the process's job to release 
+          c->proc = p;                                              // its lock and then reacquire it before jumping back to us.
+          swtch(&c->context, &p->context);
+          
           // Process is done running for now.
           // It should have changed its p->state before coming back.
           c->proc = 0;
         }
+        
         release(&p->lock);
       }
     }
-  } else if(SCHEDULING_ALGO == 1) { // First Come First Serve    
+  } else if(SCHEDULING_ALGO == 1) {                                 // First Come First Serve    
     /*
     How this works -
     Once we've identified that FCFS is to be used, the function runs the infinite for loop for(;;)
     
     Then, we loop over all processes to find a process with the least creation time
+    
     In the first iteration of for(p = proc ...), the process seen is set as the process that has come first (first_come_process)
     Then, the rest of the process creation times are checked
     Any time we find a process with a lower creation time, first_come_process gets updated,
@@ -664,25 +700,25 @@ scheduler(void)
     Then, this process' state is changed to RUNNING, and it is assigned the CPU 
     */
 
-    struct proc *first_come_process = 0;
+    struct proc *first_come_process = 0;                      // process that came first (and that is runnable). Set to null initially
 
     for(;;) {
       intr_on();
 
-      int min_creation_time = 0;
+      int min_creation_time = 0;                              // the creation time of the process that came first
       first_come_process = 0;
 
       for(p = proc; p < &proc[NPROC]; p++) {
         acquire(&p->lock);
 
         if(p->state == RUNNABLE) {
-          if(min_creation_time == 0 || first_come_process == 0) {
-            min_creation_time = p->ctime;
+          if(first_come_process == 0) {                       // assume that the first process that shows up in the
+            min_creation_time = p->ctime;                     // process table is the one that came first
             first_come_process = p;
             continue;
-          } else if(min_creation_time > p->ctime) {
-            min_creation_time = p->ctime;
-            release(&first_come_process->lock);
+          } else if(min_creation_time > p->ctime) {           // the encountered process came before what we thought
+            min_creation_time = p->ctime;                     // was the first process
+            release(&first_come_process->lock);               // release the lock on the first 
             first_come_process = p;
             continue;
           }
@@ -690,46 +726,53 @@ scheduler(void)
         release(&p->lock);
       }
 
-      if(first_come_process != 0) {
-        first_come_process->state = RUNNING;
-        c->proc = first_come_process;
-        swtch(&c->context, &first_come_process->context);
+      // note how the each time we update first_come_process, we don't release its lock, so that its parameters
+      // do not change. This means that we should also release the previously thought first process' lock before 
+      // updating first_come_process
+
+      if(first_come_process != 0) {                           // if we found the process which has the least creation time,
+        first_come_process->state = RUNNING;                  // then set its state to running,
+        c->proc = first_come_process;                         // change the cpu's process to the one found and,
+        swtch(&c->context, &first_come_process->context);     // allocate the cpu's resources for 1 time quantum
         c->proc = 0;
-        release(&first_come_process->lock);   
+        release(&first_come_process->lock);
+
+        // we will have to release the lock (which got acquired right before first_come_process was last updated), 
+        // but which did not get released
       }
     }
-  } else if(SCHEDULING_ALGO == 2) { // Priority Based Scheduling
-    struct proc *most_priority_process = 0;
+  } else if(SCHEDULING_ALGO == 2) {                           // Priority Based Scheduling
+    struct proc *most_priority_process = 0;                   // the process with the most priority (and therefore lesser numeric value)
 
     for(;;) {
       intr_on();
 
-      int min_dynamic_priority = 200; // lesser this value, greater the priority
-      // TODO try changing this to 100 instead of 200
+      int min_dynamic_priority = 500;                         // lesser this value, greater the priority. Set to a large value in the beginning so that it can change correctly
 
       int niceness;
       int dynamic_priority;
-      most_priority_process = 0; // process with the most priority
+      most_priority_process = 0;                              // process with the most priority
 
       for(p = proc; p < &proc[NPROC]; p++) {
         acquire(&p->lock);
 
-        if(p->state == RUNNABLE) {
+        if(p->state == RUNNABLE) {                            // calculate the niceness of each runnable process
           
           niceness = (int) ((float) p->sleep_time / (p->sleep_time + p->rtime)) * 10;
 
           dynamic_priority = p->static_priority - niceness + 5;
 
-          if(dynamic_priority < 0) {
+          if(dynamic_priority < 0) {                          // dp is defined as max(0, min(SP - niceness + 5, 100))
             dynamic_priority = 0;
           } else if(dynamic_priority  > 100) {
             dynamic_priority = 100;
           }
 
-          if(min_dynamic_priority > dynamic_priority) {
-            min_dynamic_priority = dynamic_priority;
+          if(min_dynamic_priority > dynamic_priority) {       // if the DP of the current process is lesser than what has been seen,
+            min_dynamic_priority = dynamic_priority;          // update most_priority_process
+            
             if(most_priority_process != 0) {
-              release(&most_priority_process->lock);
+              release(&most_priority_process->lock);          // if this is not the first time most_priority_process has been updated, release the previously found proc's lock
             }
 
             most_priority_process = p;
@@ -740,6 +783,7 @@ scheduler(void)
         release(&p->lock);
       }
 
+      // if we have a process with the most priority, then swtch to it
       if(most_priority_process != 0) {
         most_priority_process->state = RUNNING;
         c->proc = most_priority_process;
@@ -749,36 +793,39 @@ scheduler(void)
         release(&most_priority_process->lock);
       }
     }
-  } else if(SCHEDULING_ALGO == 3) { // Lottery Based Scheduling
+
+    // since PBS is also non-preemptive, the releasing logic is the same as FCFS
+
+  } else if(SCHEDULING_ALGO == 3) {                            // Lottery Based Scheduling
+
     for(;;){
-        // Avoid deadlock by ensuring that devices can interrupt.
         intr_on();
 
-        for(p = proc; p < &proc[NPROC]; p++) {
+        for(p = proc; p < &proc[NPROC]; p++) {                 // find a runnable process that gets lucky, and run it for 1 time quantum
           acquire(&p->lock);
           if(p->state == RUNNABLE) {
             
             // find the total number of tickets held by all processes
             int total_tickets = 0;
 
-            // release(&p->lock);
+            // lock not needed since CPUS = 1 for LBS
             struct proc *t;
             for(t = proc; t < &proc[NPROC]; t++) {
-              // acquire(&t->lock);
               if(t->state == RUNNABLE) {
                 total_tickets += t->tickets;
               }
-              // release(&t->lock);
             }
             
-            // acquire(&p->lock);
+            // this is a rea number between 0 and 1
             float success_probability = (float) p->tickets / total_tickets;
 
             if(success_probability < 0 || success_probability > 1) {
-              printf("%f\n", success_probability);
-              panic("HE");
+              panic("LBS: success probability out of bounds");
             }
-            
+
+            // if a randomly generated number is lesser than the success_probability, then the process has gotten lucky
+            // this metric makes sense since a smaller success_probability will be harder to trigger
+            // context switching happens here because LBS is preemptive
             if(is_the_process_lucky(success_probability)) {
               p->state = RUNNING;
               c->proc = p;
@@ -789,7 +836,53 @@ scheduler(void)
           release(&p->lock);
         }
       }
-      
+  } else if(SCHEDULING_ALGO == 4) {                              // Multilevel Feedback Scheduling
+
+    for(;;) {
+
+      for(p = proc; p < &proc[NPROC]; p++) {
+        
+        if(p->state == RUNNABLE) {                               
+          int queue_id;
+          // If the process is in the queue with the least priority, let it be there
+          // otherwise, demote it
+          if(p->queue_id == 4) {
+            queue_id = 4;
+          } else {
+            queue_id = p->queue_id + 1;
+          }
+          mlf_enqueue(p, queue_id);
+        }
+      }
+
+      // we found the processes to be run in MLFQ
+      // now loop over the queue with the most priority (as long as its not empty),
+      // and execute only the processes in that queue
+      int allocated_queue = -1;
+      for(int i = 0; i < NMLFQ; i++) {
+
+        // if a queue has already been chosen and fully executed,
+        // then do not execute further queues
+        if(allocated_queue != -1) {
+          break;
+        }
+
+        while(mlf_queue.size[i] > 0) {
+          allocated_queue = i;
+          p = mlf_dequeue(i);
+          p->last_wait_time = 0;
+          p->state = RUNNING;
+          acquire(&p->lock);
+
+          c->proc = p;
+          swtch(&c->context, &p->context);
+          
+          c->proc = 0;
+
+          release(&p->lock);
+        }
+      }
+    }
   }
 }
 

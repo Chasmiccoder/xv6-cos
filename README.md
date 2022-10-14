@@ -53,9 +53,20 @@ make qemu CUSTOM_SCHEDULING_ALGO=PBS CPUS=2
 To build and run according to Lottery Based Scheduling
 
 ```
-make qemu CUSTOM_SCHEDULING_ALGO=LBS
+make qemu CUSTOM_SCHEDULING_ALGO=LBS CPUS=1
 ```
 
+To build and run according to Multilevel Feedback Queue Scheduling
+
+```
+make qemu CUSTOM_SCHEDULING_ALGO=MLFQ CPUS=1
+```
+
+To test whether the scheduling algorithms work in the xv6-cos, run,
+
+```
+$ schedulertest
+```
 
 ## xv6-riscv 💽
 The original project can be found here -  
@@ -71,10 +82,4 @@ sys_waitx not accounted for in trace (in syscall.h)
 Update struct syscall_info syscall_structs[]
 
 xv6 password is "xv6" 
-
-Make with custom scheduling algo -
-
-
-    make CUSTOM_SCHEDULING_ALGO=FCFS
-
 -->

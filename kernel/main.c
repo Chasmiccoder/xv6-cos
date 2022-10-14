@@ -27,6 +27,10 @@ main()
       printf("Using Priority Based Scheduling\n");
     } else if(SCHEDULING_ALGO == 3) {
       printf("Using Lottery Based Scheduling\n");
+    } else if(SCHEDULING_ALGO == 4) {
+      initialize_mlf_queue();
+      printf("Using Multilevel Feedback Queue Scheduling\n");
+      panic("MLFQ Scheduler not yet deployed");
     }
 
     kinit();         // physical page allocator

@@ -9,6 +9,9 @@ struct sleeplock;
 struct stat;
 struct superblock;
 
+// (xv6-cos)
+struct mlf_queue;
+
 // bio.c
 void            binit(void);
 struct buf*     bread(uint, uint);
@@ -107,12 +110,16 @@ int             either_copyout(int user_dst, uint64 dst, void *src, uint64 len);
 int             either_copyin(void *dst, int user_src, uint64 src, uint64 len);
 void            procdump(void);
 
-// (xv6-cos)
+// (xv6-cos) in proc.c
 void            update_time(void);
 int             waitx(uint64, uint*, uint*);
 int             set_priority(int, int);
 int             settickets(int, int);
 
+// (xv6-cos) in mlfqueue.c
+void            initialize_mlf_queue(void);
+void            mlf_enqueue(struct proc *p, int queue_id);
+struct proc*    mlf_dequeue(int queue_id);
 
 // swtch.S
 void            swtch(struct context*, struct context*);
