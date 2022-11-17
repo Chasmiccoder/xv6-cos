@@ -8,3 +8,4 @@ struct mlf_queue {
 };
 
 extern struct mlf_queue mlf_queue;
+extern struct proc *queue[NMLFQ][NPROC];

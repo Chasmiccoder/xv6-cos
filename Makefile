@@ -171,6 +171,7 @@ UPROGS=\
 	$U/_schedulertest\
 	$U/_setpriority\
 	$U/_alarmtest\
+	$U/_cowtest\
 
 # (xv6-cos)
 # Added strace.c, time.c, schedulertest.c, setpriority.c, alarmtest.c

@@ -120,6 +120,8 @@ struct proc {
 
   int queue_id;                // For Multilevel Feedback Queue. Keeps track of which queue the process is in
   int last_wait_time;          // Time spend waiting, so that aging can be applied 
+  int inqueue;                 // Turns true if the process is in the queue
+  int change_queue;
 
   // sigalarm + sigreturn
   void (*alarm_handler)();              // Address of the signal handler

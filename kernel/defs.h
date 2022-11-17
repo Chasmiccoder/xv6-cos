@@ -66,6 +66,7 @@ void            ramdiskrw(struct buf*);
 void*           kalloc(void);
 void            kfree(void *);
 void            kinit(void);
+void            increse(uint64 pa); // xv6-cos (cow)
 
 // (xv6-cos) kalloc.c
 // uint64          refind(uint64);
@@ -166,6 +167,7 @@ void            trapinit(void);
 void            trapinithart(void);
 extern struct spinlock tickslock;
 void            usertrapret(void);
+int cowfault(pagetable_t pagetable, uint64 va); // xv6-cos (cow)
 
 // uart.c
 void            uartinit(void);

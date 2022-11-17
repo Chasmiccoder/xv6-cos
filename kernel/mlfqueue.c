@@ -12,7 +12,9 @@
 
 struct mlf_queue mlf_queue;
 
+
 void initialize_mlf_queue() {
+    /*
     int tick_limits[] = {1, 2, 4, 8, 16};
 
     for(int i = 0; i < NMLFQ; i++)
@@ -24,9 +26,11 @@ void initialize_mlf_queue() {
             mlf_queue.queue[i][j] = 0;
         }
     }
+    */
 }
 
 void mlf_enqueue(struct proc *p, int queue_id) {
+    /*
     if(mlf_queue.rear[queue_id] >= NPROC) {
         panic("mlf_enqueue(): invalid params passed");
     }
@@ -35,9 +39,11 @@ void mlf_enqueue(struct proc *p, int queue_id) {
     mlf_queue.rear[queue_id]++;
 
     p->queue_id = queue_id;
+    */
 }
 
 struct proc* mlf_dequeue(int queue_id) {
+    /*
     if(mlf_queue.rear[queue_id] <= 0) {
         panic("mlf_dequeue(): invalid params passed");
     }
@@ -52,4 +58,8 @@ struct proc* mlf_dequeue(int queue_id) {
     
     mlf_queue.rear[queue_id]--;
     return p;
+    */
+   struct proc *p = mlf_queue.queue[queue_id][0];
+
+   return p;
 }

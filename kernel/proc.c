@@ -7,7 +7,9 @@
 #include "defs.h"
 
 // (xv6-cos)
-#include "mlfqueue.h"
+struct proc *mlfq[NMLFQ][NPROC];
+int mlfq_lengths[NMLFQ]; // number of elements in each queue
+int mlfq_rears[NMLFQ]; // rear pointers of all queues
 
 struct cpu cpus[NCPU];
 
@@ -58,6 +60,12 @@ procinit(void)
       initlock(&p->lock, "proc");
       p->state = UNUSED;
       p->kstack = KSTACK((int) (p - proc));
+  }
+
+  // initialize the MLFQ on boot
+  for(int i = 0; i < NMLFQ; i++) {
+    mlfq_lengths[i] = 0;
+    mlfq_rears[i] = 0;
   }
 }
 
@@ -163,8 +171,10 @@ found:
   p->tickets = 1; // by default
 
   // for multilevel feedback scheduling
-  p->queue_id = -1; // the process is not assigned a queue yet
-  p->last_wait_time = 0;
+  p->queue_id = 0; // the process is in the queue with most priority by default
+  // p->last_wait_time = 0;
+  p->inqueue = 0; // the process is not in the queue initially
+  // p->
   
   p->state = USED;
 
@@ -840,6 +850,7 @@ scheduler(void)
       }
   } else if(SCHEDULING_ALGO == 4) {                              // Multilevel Feedback Scheduling
 
+    /*
     for(;;) {
 
       for(p = proc; p < &proc[NPROC]; p++) {
@@ -885,6 +896,8 @@ scheduler(void)
         }
       }
     }
+
+    */
   }
 }
 

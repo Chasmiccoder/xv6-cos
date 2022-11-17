@@ -319,13 +319,40 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
   uint64 pa, i;
   uint flags;
   /*  int setflags = 0;*/
-  char *mem;
+  // char *mem;
 
   for(i = 0; i < sz; i += PGSIZE){
     if((pte = walk(old, i, 0)) == 0)
       panic("uvmcopy: pte should exist");
     if((*pte & PTE_V) == 0)
       panic("uvmcopy: page not present");
+
+    // xv6-cos (cow)
+    //fix the permission bits
+    pa = PTE2PA(*pte);
+    *pte &= ~PTE_W;
+    flags = PTE_FLAGS(*pte);
+	//not allocated
+    // if((mem = kalloc()) == 0)
+    //   goto err;
+    // memmove(mem, (char*)pa, PGSIZE);
+	//increase refcnt
+    increse(pa);
+    //map the va to the same pa using flags
+    if (mappages(new, i, PGSIZE, (uint64)pa, flags) != 0)
+    {
+      goto err;
+    }
+  }
+  return 0;
+
+err:
+  uvmunmap(new, 0, i / PGSIZE, 1);
+  return -1;
+}
+
+
+    /*
     pa = PTE2PA(*pte);
     flags = PTE_FLAGS(*pte);
     if((mem = kalloc()) == 0)
@@ -336,27 +363,13 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
       goto err;
     }
   }
-
-  // (xv6-cos)
-  /*    if (*pte & PTE_W){
-    flags |= PTE_COW; // copy on write
-    flags &= ~PTE_W;  // make read-only
-    setflags = 1;
-    }
-    if((mappages(new, i, PGSIZE, pa, flags)) != 0)
-      goto err;
-    if (setflags){
-    *pte = PA2PTE(pa);
-    *pte |= flags;  // apply flags to *pte
-    }
-    krefinc(pa);    // increment ref count of page
-*/
   return 0;
 
  err:
   uvmunmap(new, 0, i / PGSIZE, 1);
   return -1;
 }
+*/
 
 // mark a PTE invalid for user access.
 // used by exec for the user stack guard page.
@@ -382,11 +395,12 @@ copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
   while(len > 0){
     va0 = PGROUNDDOWN(dstva);
 
-    /*
-    int cpf = cow_pagefault(pagetable, va0);
-    if(cpf != 0)
+    // (xv6-cos) (cow)
+    if (va0 > MAXVA)
+        return -1;    
+    if(cowfault(pagetable,va0)<0){
       return -1;
-*/
+    }
 
     pa0 = walkaddr(pagetable, va0);
     if(pa0 == 0)

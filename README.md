@@ -72,6 +72,7 @@ To test strace
 
 ```
 strace 32 grep hello README
+strace 2147483647 grep hello README
 ```
 
 To test sigalarm and sigreturn

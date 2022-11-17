@@ -14,3 +14,4 @@
 
 // (xv6-cos)
 #define NMLFQ 5                       // total number of queues in MLFQ Scheduling
+#define AGING_INTERVAL 64
